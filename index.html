@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Video Downloader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .supported-platforms {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .platform-tag {
+            background: #f0f0f0;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            color: #555;
+        }
+
+        .server-section {
+            margin-bottom: 25px;
+        }
+
+        .server-label {
+            display: block;
+            margin-bottom: 12px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .server-hint {
+            display: block;
+            color: #888;
+            font-size: 0.85em;
+            font-weight: normal;
+            margin-top: 3px;
+        }
+
+        .server-buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .server-btn {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            color: #555;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .server-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .server-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #555;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .video-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .video-info h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .video-info p {
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .download-options {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .download-option {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .download-option:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .quality-info {
+            flex: 1;
+        }
+
+        .quality-label {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .quality-details {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .download-btn {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+            transform: scale(1.05);
+        }
+
+        .info-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #856404;
+        }
+
+        @media (max-width: 600px) {
+            .server-buttons {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Universal Video Downloader</h1>
+        <p class="subtitle">Download videos from YouTube, Instagram, TikTok & Facebook</p>
+
+        <div class="supported-platforms">
+            <span class="platform-tag">YouTube</span>
+            <span class="platform-tag">Instagram</span>
+            <span class="platform-tag">TikTok</span>
+            <span class="platform-tag">Facebook</span>
+        </div>
+
+        <div class="server-section">
+            <label class="server-label">
+                Select Server
+                <span class="server-hint">If download fails, try a different server</span>
+            </label>
+            <div class="server-buttons">
+                <button class="server-btn active" onclick="selectServer(0)">Server 1</button>
+                <button class="server-btn" onclick="selectServer(1)">Server 2</button>
+                <button class="server-btn" onclick="selectServer(2)">Server 3</button>
+                <button class="server-btn" onclick="selectServer(3)">Server 4</button>
+                <button class="server-btn" onclick="selectServer(4)">Server 5</button>
+                <button class="server-btn" onclick="selectServer(5)">Server 6</button>
+                <button class="server-btn" onclick="selectServer(6)">Server 7</button>
+                <button class="server-btn" onclick="selectServer(7)">Server 8</button>
+                <button class="server-btn" onclick="selectServer(8)">Server 9</button>
+                <button class="server-btn" onclick="selectServer(9)">Server 10</button>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="videoUrl">Video URL</label>
+            <input 
+                type="text" 
+                id="videoUrl" 
+                placeholder="Paste video link here (e.g., https://youtube.com/watch?v=...)"
+            >
+        </div>
+
+        <div class="button-group">
+            <button class="btn-primary" onclick="fetchVideoInfo()">Get Video</button>
+            <button class="btn-secondary" onclick="clearForm()">Clear</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #666;">Processing video...</p>
+        </div>
+
+        <div class="status-message" id="statusMessage"></div>
+
+        <div class="video-info" id="videoInfo">
+            <h3 id="videoTitle"></h3>
+            <p><strong>Author:</strong> <span id="videoAuthor"></span></p>
+            <p><strong>Duration:</strong> <span id="videoDuration"></span></p>
+            <p><strong>Views:</strong> <span id="videoViews"></span></p>
+            <img id="videoThumbnail" class="video-thumbnail" alt="Video thumbnail">
+        </div>
+
+        <div class="download-options" id="downloadOptions">
+            <h3 style="margin-bottom: 15px; color: #333;">Download Options:</h3>
+            <div id="downloadList"></div>
+        </div>
+
+        <div class="info-box">
+            <strong>ℹ️ How to use:</strong><br>
+            1. Select a server from the buttons above<br>
+            2. Copy the video URL from YouTube, Instagram, TikTok, or Facebook<br>
+            3. Paste it in the box above<br>
+            4. Click "Get Video"<br>
+            5. Choose your preferred quality and download<br><br>
+            <strong>Note:</strong> Only public videos can be downloaded. If download doesn't start, right-click the video → "Save video as..."
+        </div>
+    </div>
+
+    <script>
+        // Multiple API keys - 10 servers
+        const API_SERVERS = [
+            '58e4a51d7cmshf511f4ccad6260ep1713fajsn81070320eeb3',  // Server 1
+            //'cde1a0fc21mshe791f7eb6259a41p1c4f6jsn8eae344780b5',  // Server 2
+            'f7efcb3689msheecb47382c18644p1b73bejsnd145ba671664',  // Server 2
+            '187e4e10d9mshc10bfe9c0104b4cp1e17fajsn3d1fc9cb2645',  // Server 3
+            'cf16190cc1msh3a6e45972c2b670p1cfa5bjsn02333270849f',  // Server 4
+            '09da2cc846mshbfe34aa7b40a627p189acfjsn962374b381fe',  // Server 5
+            '146d902d1cmsh6d98d16d941c204p1a65cdjsn0716a67867d6',  // Server 6
+            'e6fcd4de5fmsh8d78827b06728ffp18e0bejsn881af26e58a9',  // Server 7
+            'd3f5ff39eemshb69cda63d19b2ccp13b806jsnd4fe8373cd42',  // Server 8
+            '98d99fb0cemshcd102195d0bead2p187198jsnbd3d1273c986',  // Server 9
+            '0b4d02507amsh985065fed1eb416p1d31dbjsnbec7e5464377'   // Server 10
+        ];
+        
+        const RAPIDAPI_HOST = 'social-media-video-downloader.p.rapidapi.com';
+
+        let selectedServerIndex = 0;
+        let currentVideoData = null;
+
+        function selectServer(index) {
+            selectedServerIndex = index;
+            
+            // Update button styles
+            const buttons = document.querySelectorAll('.server-btn');
+            buttons.forEach((btn, i) => {
+                if (i === index) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Save selection
+            localStorage.setItem('selectedServer', index);
+        }
+
+        function getSelectedAPIKey() {
+            return API_SERVERS[selectedServerIndex];
+        }
+
+        function getSelectedServerName() {
+            return `Server ${selectedServerIndex + 1}`;
+        }
+
+        async function fetchVideoInfo() {
+            const urlInput = document.getElementById('videoUrl');
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                showMessage('Please enter a video URL', 'error');
+                return;
+            }
+
+            if (!isValidUrl(url)) {
+                showMessage('Please enter a valid URL', 'error');
+                return;
+            }
+
+            showLoading(true);
+            hideElements();
+
+            try {
+                const selectedAPI = getSelectedAPIKey();
+                const serverName = getSelectedServerName();
+                
+                // Detect platform and use appropriate endpoint
+                const platform = detectPlatform(url);
+                let endpoint = '';
+                let videoId = '';
+
+                if (platform === 'youtube') {
+                    videoId = extractYouTubeId(url);
+                    if (!videoId) throw new Error('Invalid YouTube URL');
+                    endpoint = `https://${RAPIDAPI_HOST}/youtube/v3/video/details?videoId=${videoId}`;
+                } else if (platform === 'instagram') {
+                    const shortcode = extractInstagramShortcode(url);
+                    if (!shortcode) throw new Error('Invalid Instagram URL');
+                    endpoint = `https://${RAPIDAPI_HOST}/instagram/v3/media/post/details?shortcode=${shortcode}`;
+                } else if (platform === 'facebook') {
+                    endpoint = `https://${RAPIDAPI_HOST}/facebook/v3/post/details?url=${encodeURIComponent(url)}`;
+                } else if (platform === 'tiktok') {
+                    endpoint = `https://${RAPIDAPI_HOST}/tiktok/v3/post/details?url=${encodeURIComponent(url)}`;
+                } else {
+                    throw new Error('Platform not supported. Please use YouTube, Instagram, TikTok, or Facebook.');
+                }
+
+                const response = await fetch(endpoint, {
+                    method: 'GET',
+                    headers: {
+                        'X-RapidAPI-Key': selectedAPI,
+                        'X-RapidAPI-Host': RAPIDAPI_HOST
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        throw new Error(`${serverName} has an issue. Please try a different server (recommended: Server ${(selectedServerIndex % 9) + 2}).`);
+                    } else if (response.status === 429) {
+                        throw new Error(`${serverName} is at capacity. Please try a different server (recommended: Server ${(selectedServerIndex % 9) + 2}).`);
+                    } else if (response.status === 404) {
+                        throw new Error(`Video not found or unavailable. Make sure the video is public and the URL is correct.`);
+                    } else if (response.status >= 500) {
+                        throw new Error(`${serverName} is having technical difficulties. Try a different server.`);
+                    }
+                    throw new Error(`${serverName} returned an error. Try a different server.`);
+                }
+
+                const data = await response.json();
+                currentVideoData = data;
+
+                if (data.error) {
+                    throw new Error(data.error.message || 'Failed to process video');
+                }
+
+                displayVideoInfo(data, platform);
+                displayDownloadOptions(data, platform);
+                showMessage(`Video retrieved successfully using ${serverName}!`, 'success');
+
+            } catch (error) {
+                console.error('Error:', error);
+                let errorMsg = error.message;
+                
+                // Add helpful server suggestion if it's a server-related error
+                if (errorMsg.includes('Try a different server') || errorMsg.includes('try a different server')) {
+                    const nextServer = (selectedServerIndex + 1) % 10;
+                    errorMsg += ` Click on Server ${nextServer + 1} and try again.`;
+                }
+                
+                showMessage(errorMsg, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function detectPlatform(url) {
+            if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+            if (url.includes('instagram.com')) return 'instagram';
+            if (url.includes('facebook.com') || url.includes('fb.watch')) return 'facebook';
+            if (url.includes('tiktok.com')) return 'tiktok';
+            return 'unknown';
+        }
+
+        function extractYouTubeId(url) {
+            const patterns = [
+                /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+                /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+                /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/
+            ];
+            
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match) return match[1];
+            }
+            return null;
+        }
+
+        function extractInstagramShortcode(url) {
+            const match = url.match(/instagram\.com\/(?:p|reel)\/([a-zA-Z0-9_-]+)/);
+            return match ? match[1] : null;
+        }
+
+        function displayVideoInfo(data, platform) {
+            const videoInfo = document.getElementById('videoInfo');
+            const title = document.getElementById('videoTitle');
+            const author = document.getElementById('videoAuthor');
+            const duration = document.getElementById('videoDuration');
+            const views = document.getElementById('videoViews');
+            const thumbnail = document.getElementById('videoThumbnail');
+
+            if (platform === 'youtube') {
+                title.textContent = data.metadata?.title || 'Video';
+                author.textContent = data.metadata?.author?.name || 'Unknown';
+                duration.textContent = data.metadata?.additionalData?.duration || 'N/A';
+                views.textContent = data.metadata?.additionalData?.view_count || 'N/A';
+                thumbnail.src = data.metadata?.thumbnailUrl || '';
+            } else if (platform === 'instagram' || platform === 'facebook' || platform === 'tiktok') {
+                title.textContent = data.metadata?.title || data.metadata?.description || 'Video';
+                author.textContent = data.metadata?.author?.name || data.metadata?.owner?.username || 'Unknown';
+                duration.textContent = 'N/A';
+                views.textContent = data.metadata?.view_count || 'N/A';
+                thumbnail.src = data.metadata?.thumbnailUrl || data.metadata?.thumbnail_url || '';
+            }
+
+            videoInfo.style.display = 'block';
+        }
+
+        function displayDownloadOptions(data, platform) {
+            const downloadOptions = document.getElementById('downloadOptions');
+            const downloadList = document.getElementById('downloadList');
+            
+            downloadList.innerHTML = '';
+
+            let videos = [];
+
+            if (platform === 'youtube') {
+                videos = data.contents?.[0]?.videos || [];
+            } else {
+                videos = data.contents?.[0]?.videos || [];
+            }
+
+            if (videos.length === 0) {
+                downloadList.innerHTML = '<p style="color: #666;">No download options available for this video.</p>';
+                downloadOptions.style.display = 'block';
+                return;
+            }
+
+            videos.forEach((video, index) => {
+                const option = document.createElement('div');
+                option.className = 'download-option';
+                
+                const qualityInfo = document.createElement('div');
+                qualityInfo.className = 'quality-info';
+                
+                const label = video.label || video.metadata?.quality_label || `Quality ${index + 1}`;
+                const size = video.metadata?.content_length_text || 'Unknown size';
+                const resolution = video.metadata?.width && video.metadata?.height 
+                    ? `${video.metadata.width}x${video.metadata.height}` 
+                    : '';
+                
+                qualityInfo.innerHTML = `
+                    <div class="quality-label">${label}</div>
+                    <div class="quality-details">${resolution} - ${size}</div>
+                `;
+                
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'download-btn';
+                downloadBtn.textContent = '⬇️ Download';
+                downloadBtn.onclick = () => downloadVideo(video.url, label);
+                
+                option.appendChild(qualityInfo);
+                option.appendChild(downloadBtn);
+                downloadList.appendChild(option);
+            });
+
+            downloadOptions.style.display = 'block';
+        }
+
+        async function downloadVideo(url, quality) {
+            try {
+                showMessage(`Preparing download for ${quality}...`, 'info');
+                
+                // Try direct download first
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('Fetch failed');
+                    
+                    const blob = await response.blob();
+                    
+                    // Create download link
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = downloadUrl;
+                    a.download = `video_${quality}_${Date.now()}.mp4`;
+                    
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    // Cleanup
+                    setTimeout(() => {
+                        window.URL.revokeObjectURL(downloadUrl);
+                        document.body.removeChild(a);
+                    }, 100);
+                    
+                    showMessage(`Download started! Check your downloads folder.`, 'success');
+                } catch (fetchError) {
+                    // Fallback: Open in new tab with download attribute
+                    console.log('Direct download failed, using fallback method');
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `video_${quality}_${Date.now()}.mp4`;
+                    a.target = '_blank';
+                    a.rel = 'noopener noreferrer';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    
+                    showMessage(`Download opened in new tab. Right-click the video and select "Save video as..." to download.`, 'info');
+                }
+            } catch (error) {
+                console.error('Download error:', error);
+                showMessage('Download failed. Try right-clicking the download button and selecting "Save link as..."', 'error');
+            }
+        }
+
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function showMessage(message, type) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = message;
+            statusMessage.className = 'status-message ' + type;
+            statusMessage.style.display = 'block';
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusMessage.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function hideElements() {
+            document.getElementById('videoInfo').style.display = 'none';
+            document.getElementById('downloadOptions').style.display = 'none';
+            document.getElementById('statusMessage').style.display = 'none';
+        }
+
+        function clearForm() {
+            document.getElementById('videoUrl').value = '';
+            hideElements();
+            currentVideoData = null;
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('videoUrl').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                fetchVideoInfo();
+            }
+        });
+
+        // Load saved server selection on page load
+        window.addEventListener('load', function() {
+            const savedServer = localStorage.getItem('selectedServer');
+            if (savedServer) {
+                selectServer(parseInt(savedServer));
+            }
+        });
+    </script>
+</body>
+</html>
