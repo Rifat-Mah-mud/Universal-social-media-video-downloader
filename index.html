@@ -586,32 +586,132 @@ async function fetchVideoDetails(url) {
 async function fetchAudioDetails(url) {
     const platform = detectPlatform(url);
     if (platform !== 'youtube') {
-        throw new Error('Audio (MP3) download is currently only available for YouTube videos.');
+        throw new Error('Audio (MP3) download is only available for YouTube videos.');
     }
 
     const videoId = extractYouTubeId(url);
     if (!videoId) throw new Error('Invalid YouTube URL — could not extract video ID.');
 
-
-    /* Step 1 – get video info + audio link */
     showLoading(true, 'Fetching audio track…');
 
-    const res = await fetch(
-        `https://${AUDIO_API_HOST}/dl?id=${videoId}`,
-        { headers: { 'X-RapidAPI-Key': AUDIO_API_KEY, 'X-RapidAPI-Host': AUDIO_API_HOST } }
-    );
+    /*
+     * We try multiple RapidAPI endpoints in order.
+     * All use the same API key. First one that returns usable audio wins.
+     *
+     * Endpoint A: yt-api.p.rapidapi.com  → returns { adaptiveFormats, title, thumbnail }
+     * Endpoint B: youtube-mp36.p.rapidapi.com → returns { link, title, status }
+     * Endpoint C: youtube-to-mp315.p.rapidapi.com → returns { url, title }
+     */
+    const endpoints = [
+        {
+            url: `https://yt-api.p.rapidapi.com/dl?id=${videoId}`,
+            host: 'yt-api.p.rapidapi.com',
+            parse: (d) => extractFormatsFromYtApi(d)
+        },
+        {
+            url: `https://youtube-mp36.p.rapidapi.com/dl?id=${videoId}`,
+            host: 'youtube-mp36.p.rapidapi.com',
+            parse: (d) => extractFormatsFromMp36(d)
+        },
+        {
+            url: `https://youtube-to-mp315.p.rapidapi.com/mp3?url=https://www.youtube.com/watch?v=${videoId}`,
+            host: 'youtube-to-mp315.p.rapidapi.com',
+            parse: (d) => extractFormatsFromMp315(d)
+        }
+    ];
 
-    handleHttpError(res, 'Audio server');
-    const data = await res.json();
+    let lastError = null;
+    for (const ep of endpoints) {
+        try {
+            showLoading(true, `Trying audio source…`);
+            const res = await fetch(ep.url, {
+                headers: { 'X-RapidAPI-Key': AUDIO_API_KEY, 'X-RapidAPI-Host': ep.host }
+            });
 
-    if (!data || data.status === 'FAILED') {
-        throw new Error(data?.msg || 'Audio extraction failed. The video may be restricted.');
+            if (!res.ok) { lastError = `HTTP ${res.status}`; continue; }
+
+            const data = await res.json();
+            console.log(`[Audio] Response from ${ep.host}:`, data);
+
+            const result = ep.parse(data);
+            if (!result || !result.formats || result.formats.length === 0) {
+                lastError = `No audio tracks from ${ep.host}`; continue;
+            }
+
+            currentVideoData = { ...data, _parsedResult: result };
+            displayAudioInfo(result);
+            displayAudioDownloadOptions(result);
+            showMessage('Audio ready! Choose a quality and download.', 'success');
+            return; // ✅ success
+        } catch (err) {
+            console.warn(`[Audio] ${ep.host} failed:`, err);
+            lastError = err.message;
+        }
     }
 
-    currentVideoData = data;
-    displayAudioInfo(data);
-    displayAudioDownloadOptions(data);
-    showMessage('Audio info fetched! Choose a quality and download below.', 'success');
+    throw new Error(`Could not extract audio. ${lastError || 'All sources failed.'}`);
+}
+
+/* ── Parsers for each API shape ── */
+
+function extractFormatsFromYtApi(data) {
+    // Shape: { status, title, thumbnail, author, adaptiveFormats: [...], formats: [...] }
+    const title     = data.title || data.videoDetails?.title || 'Audio';
+    const author    = data.author || data.videoDetails?.author || '';
+    const thumbnail = data.thumbnail?.[0]?.url || data.thumbnail || '';
+
+    // Try adaptiveFormats first (has audio-only), then formats
+    const all = [...(data.adaptiveFormats || []), ...(data.formats || [])];
+    const audioFormats = all.filter(f =>
+        f.mimeType && f.mimeType.startsWith('audio/')
+    ).map(f => ({
+        url:         f.url,
+        mimeType:    f.mimeType,
+        bitrate:     f.bitrate || f.averageBitrate || 0,
+        audioQuality: f.audioQuality || '',
+        sampleRate:  f.audioSampleRate || '',
+        size:        f.contentLength ? formatBytes(parseInt(f.contentLength)) : ''
+    }));
+
+    if (!audioFormats.length) return null;
+    return { title, author, thumbnail, formats: audioFormats };
+}
+
+function extractFormatsFromMp36(data) {
+    // Shape: { status: "ok", link: "https://...", title, duration }
+    if (data.status !== 'ok' || !data.link) return null;
+    return {
+        title:     data.title || 'Audio',
+        author:    '',
+        thumbnail: data.thumbnail || '',
+        formats: [{
+            url:         data.link,
+            mimeType:    'audio/mpeg',
+            bitrate:     128000,
+            audioQuality: 'STANDARD',
+            sampleRate:  '',
+            size:        ''
+        }]
+    };
+}
+
+function extractFormatsFromMp315(data) {
+    // Shape: { url, title } or { download_url, title }
+    const link = data.url || data.download_url || data.mp3 || data.link;
+    if (!link) return null;
+    return {
+        title:     data.title || 'Audio',
+        author:    '',
+        thumbnail: data.thumbnail || '',
+        formats: [{
+            url:         link,
+            mimeType:    'audio/mpeg',
+            bitrate:     128000,
+            audioQuality: 'STANDARD',
+            sampleRate:  '',
+            size:        ''
+        }]
+    };
 }
 
 /* ───────────────── HTTP error helper ───────────────── */
@@ -640,11 +740,10 @@ function displayVideoInfo(data, platform) {
     document.getElementById('videoInfo').style.display     = 'block';
 }
 
-function displayAudioInfo(data) {
-    /* YT-API shape: { title, author, thumbnail, ... } */
-    document.getElementById('videoTitle').textContent  = data.title  || 'Audio';
-    document.getElementById('videoAuthor').textContent = data.author || 'Unknown';
-    document.getElementById('videoThumbnail').src      = data.thumbnail || '';
+function displayAudioInfo(result) {
+    document.getElementById('videoTitle').textContent  = result.title     || 'Audio';
+    document.getElementById('videoAuthor').textContent = result.author    || 'Unknown';
+    document.getElementById('videoThumbnail').src      = result.thumbnail || '';
     document.getElementById('durationBlock').style.display = 'none';
     document.getElementById('viewsBlock').style.display    = 'none';
     document.getElementById('videoInfo').style.display     = 'block';
@@ -674,26 +773,12 @@ function displayVideoDownloadOptions(data) {
     document.getElementById('downloadOptions').style.display = 'block';
 }
 
-function displayAudioDownloadOptions(data) {
+function displayAudioDownloadOptions(result) {
     const list = document.getElementById('downloadList');
     list.innerHTML = '';
     document.getElementById('downloadOptionsTitle').textContent = '🎵 Audio Download Options:';
 
-    /*
-     * YT-API /dl response shape:
-     * { status, title, author, thumbnail,
-     *   formats: [ { itag, url, mimeType, bitrate, audioQuality, contentLength, ... } ]
-     * }
-     * We filter for audio-only formats (mimeType starts with "audio/")
-     */
-    const formats = (data.formats || []).filter(f =>
-        f.mimeType && f.mimeType.startsWith('audio/')
-    );
-
-    /* Fallback: some API variants return a single `url` at top level */
-    if (!formats.length && data.url) {
-        formats.push({ url: data.url, mimeType: 'audio/mp4', audioQuality: 'AUDIO_QUALITY_MEDIUM', bitrate: 128000 });
-    }
+    const formats = result.formats || [];
 
     if (!formats.length) {
         list.innerHTML = '<p style="color:#666">No audio tracks found. Try a different video.</p>';
@@ -705,16 +790,15 @@ function displayAudioDownloadOptions(data) {
     formats.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0));
 
     formats.forEach((f, i) => {
-        const qualityTag = (f.audioQuality || '').replace('AUDIO_QUALITY_', '').toLowerCase();
+        const qualityTag = (f.audioQuality || 'standard').replace('AUDIO_QUALITY_', '').toLowerCase();
         const kbps       = f.bitrate ? `${Math.round(f.bitrate / 1000)} kbps` : '';
-        const sampleRate = f.audioSampleRate ? `${f.audioSampleRate} Hz` : '';
-        const sizeBytes  = f.contentLength ? formatBytes(parseInt(f.contentLength)) : '';
-        const label      = `Audio ${i+1} (${qualityTag || 'standard'})`;
-        const details    = [kbps, sampleRate, sizeBytes].filter(Boolean).join(' · ');
+        const sampleRate = f.sampleRate ? `${f.sampleRate} Hz` : '';
+        const label      = `Audio ${i + 1} — ${qualityTag}`;
+        const details    = [kbps, sampleRate, f.size].filter(Boolean).join(' · ') || 'MP3';
 
         list.appendChild(makeDownloadRow(
             `🎵 ${label}`, details,
-            () => triggerAudioDownload(f.url, `${data.title || 'audio'}_${qualityTag}.mp3`)
+            () => triggerAudioDownload(f.url, `${result.title || 'audio'}_${qualityTag}.mp3`)
         ));
     });
 
