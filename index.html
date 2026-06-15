@@ -595,28 +595,26 @@ async function fetchAudioDetails(url) {
     showLoading(true, 'Fetching audio track…');
 
     /*
-     * We try multiple RapidAPI endpoints in order.
-     * All use the same API key. First one that returns usable audio wins.
-     *
-     * Endpoint A: yt-api.p.rapidapi.com  → returns { adaptiveFormats, title, thumbnail }
-     * Endpoint B: youtube-mp36.p.rapidapi.com → returns { link, title, status }
-     * Endpoint C: youtube-to-mp315.p.rapidapi.com → returns { url, title }
+     * Priority: APIs that do server-side MP3 conversion come first.
+     * 1. youtube-mp36   -> real MP3 link (best)
+     * 2. youtube-to-mp315 -> also real MP3 link
+     * 3. yt-api         -> last resort (raw webm/m4a)
      */
     const endpoints = [
-        {
-            url: `https://yt-api.p.rapidapi.com/dl?id=${videoId}`,
-            host: 'yt-api.p.rapidapi.com',
-            parse: (d) => extractFormatsFromYtApi(d)
-        },
         {
             url: `https://youtube-mp36.p.rapidapi.com/dl?id=${videoId}`,
             host: 'youtube-mp36.p.rapidapi.com',
             parse: (d) => extractFormatsFromMp36(d)
         },
         {
-            url: `https://youtube-to-mp315.p.rapidapi.com/mp3?url=https://www.youtube.com/watch?v=${videoId}`,
+            url: `https://youtube-to-mp315.p.rapidapi.com/mp3?url=${encodeURIComponent('https://www.youtube.com/watch?v=' + videoId)}`,
             host: 'youtube-to-mp315.p.rapidapi.com',
             parse: (d) => extractFormatsFromMp315(d)
+        },
+        {
+            url: `https://yt-api.p.rapidapi.com/dl?id=${videoId}`,
+            host: 'yt-api.p.rapidapi.com',
+            parse: (d) => extractFormatsFromYtApi(d)
         }
     ];
 
@@ -791,14 +789,17 @@ function displayAudioDownloadOptions(result) {
 
     formats.forEach((f, i) => {
         const qualityTag = (f.audioQuality || 'standard').replace('AUDIO_QUALITY_', '').toLowerCase();
-        const kbps       = f.bitrate ? `${Math.round(f.bitrate / 1000)} kbps` : '';
+        const kbps       = f.bitrate ? `${Math.round(f.bitrate / 1000)} kbps` : '128 kbps';
         const sampleRate = f.sampleRate ? `${f.sampleRate} Hz` : '';
-        const label      = `Audio ${i + 1} — ${qualityTag}`;
-        const details    = [kbps, sampleRate, f.size].filter(Boolean).join(' · ') || 'MP3';
+        const isTrueMP3  = f.mimeType === 'audio/mpeg';
+        const formatTag  = isTrueMP3 ? 'MP3' : 'Audio → MP3';
+        const label      = `${formatTag} — ${qualityTag}`;
+        const details    = [kbps, sampleRate, f.size].filter(Boolean).join(' · ') || 'MP3 Audio';
+        const safeTitle  = (result.title || 'audio').replace(/[<>:"/\\|?*]/g, '').trim() || 'audio';
 
         list.appendChild(makeDownloadRow(
             `🎵 ${label}`, details,
-            () => triggerAudioDownload(f.url, `${result.title || 'audio'}_${qualityTag}.mp3`)
+            () => triggerAudioDownload(f.url, `${safeTitle}.mp3`)
         ));
     });
 
