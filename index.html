@@ -415,7 +415,7 @@ const VIDEO_API_KEYS = [
  *    Sign up free at https://rapidapi.com and subscribe to "YT-API" (free plan).
  */
 const AUDIO_API_HOST = 'yt-api.p.rapidapi.com';
-const AUDIO_API_KEY  = 'YOUR_RAPIDAPI_KEY_HERE';   // ← paste your key here
+const AUDIO_API_KEY  = 'a6924a3907mshab6b9e204f9fc4bp117342jsn0a340f362e6b';
 
 let selectedServerIndex = 0;
 let currentMode = 'video';
@@ -592,26 +592,6 @@ async function fetchAudioDetails(url) {
     const videoId = extractYouTubeId(url);
     if (!videoId) throw new Error('Invalid YouTube URL — could not extract video ID.');
 
-    if (AUDIO_API_KEY === 'YOUR_RAPIDAPI_KEY_HERE') {
-        /* ── Demo / fallback mode ──
-           Show a friendly message instead of crashing.
-           Replace AUDIO_API_KEY at the top of the script to enable real downloads. */
-        showMessage(
-            '⚠️ Audio API key not configured. See instructions in the info box below.',
-            'warning'
-        );
-        document.getElementById('infoBox').innerHTML = `
-            <strong>🔑 Set up your Audio API key:</strong><br>
-            1. Go to <a href="https://rapidapi.com/ytjar/api/yt-api" target="_blank">rapidapi.com → YT-API</a><br>
-            2. Subscribe to the free plan<br>
-            3. Copy your API key<br>
-            4. Open this HTML file and replace <code>YOUR_RAPIDAPI_KEY_HERE</code> with your key<br><br>
-            <strong>Why a separate key?</strong> The video servers above don't return raw audio-only files.
-            The YT-API gives a direct MP3 link that your browser can download instantly.
-        `;
-        document.getElementById('infoBox').style.background = '#fef3c7';
-        return;
-    }
 
     /* Step 1 – get video info + audio link */
     showLoading(true, 'Fetching audio track…');
