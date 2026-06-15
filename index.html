@@ -5,11 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Universal Video Downloader</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -27,29 +23,19 @@
             padding: 40px;
             max-width: 700px;
             width: 100%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
 
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 2em;
-        }
+        h1 { text-align: center; color: #333; margin-bottom: 10px; font-size: 2em; }
 
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 0.9em;
-        }
+        .subtitle { text-align: center; color: #666; margin-bottom: 20px; font-size: 0.9em; }
 
         .supported-platforms {
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
             gap: 10px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .platform-tag {
@@ -60,12 +46,12 @@
             color: #555;
         }
 
-        /* Toggle Switch for Video/MP3 */
+        /* ── Mode Toggle ── */
         .mode-toggle {
             display: flex;
             justify-content: center;
             gap: 0;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             background: #f0f0f0;
             border-radius: 10px;
             padding: 5px;
@@ -91,13 +77,22 @@
             color: white;
         }
 
-        .mode-btn:hover:not(.active) {
-            color: #333;
+        /* ── Audio-mode notice ── */
+        .audio-notice {
+            display: none;
+            background: #eef2ff;
+            border: 1px solid #c7d2fe;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            font-size: 0.88em;
+            color: #4338ca;
         }
 
-        .server-section {
-            margin-bottom: 25px;
-        }
+        .audio-notice.visible { display: block; }
+
+        /* ── Server selection ── */
+        .server-section { margin-bottom: 25px; }
 
         .server-label {
             display: block;
@@ -134,27 +129,17 @@
             transition: all 0.3s;
         }
 
-        .server-btn:hover {
-            border-color: #667eea;
-            transform: translateY(-2px);
-        }
-
+        .server-btn:hover { border-color: #667eea; transform: translateY(-2px); }
         .server-btn.active {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border-color: #667eea;
         }
 
-        .input-group {
-            margin-bottom: 20px;
-        }
+        /* ── Input & buttons ── */
+        .input-group { margin-bottom: 20px; }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 600;
-        }
+        label { display: block; margin-bottom: 8px; color: #555; font-weight: 600; }
 
         input[type="text"] {
             width: 100%;
@@ -165,133 +150,48 @@
             transition: border-color 0.3s;
         }
 
-        input[type="text"]:focus {
-            outline: none;
-            border-color: #667eea;
-        }
+        input[type="text"]:focus { outline: none; border-color: #667eea; }
 
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+        .button-group { display: flex; gap: 10px; margin-bottom: 20px; }
 
-        button {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
+        button { flex: 1; padding: 15px; border: none; border-radius: 10px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s; }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102,126,234,0.4); }
+        .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
+        .btn-secondary { background: #f0f0f0; color: #555; }
+        .btn-secondary:hover { background: #e0e0e0; }
 
-        .btn-primary:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-secondary {
-            background: #f0f0f0;
-            color: #555;
-        }
-
-        .btn-secondary:hover {
-            background: #e0e0e0;
-        }
-
-        .loading {
-            text-align: center;
-            margin: 20px 0;
-            display: none;
-        }
+        /* ── Loading ── */
+        .loading { text-align: center; margin: 20px 0; display: none; }
 
         .spinner {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #667eea;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 40px; height: 40px;
             animation: spin 1s linear infinite;
             margin: 0 auto;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
 
-        .status-message {
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            display: none;
-        }
+        /* ── Status messages ── */
+        .status-message { padding: 15px; border-radius: 10px; margin: 20px 0; display: none; }
+        .status-message.success { background:#d4edda; color:#155724; border:1px solid #c3e6cb; }
+        .status-message.error   { background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; }
+        .status-message.info    { background:#d1ecf1; color:#0c5460; border:1px solid #bee5eb; }
+        .status-message.warning { background:#fff3cd; color:#856404; border:1px solid #ffeaa7; }
 
-        .status-message.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
+        /* ── Video info card ── */
+        .video-info { background:#f8f9fa; padding:20px; border-radius:10px; margin:20px 0; display:none; }
+        .video-info h3 { margin-bottom:10px; color:#333; }
+        .video-info p  { color:#666; margin:5px 0; }
+        .video-thumbnail { width:100%; border-radius:10px; margin-top:10px; }
 
-        .status-message.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .status-message.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .status-message.warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-
-        .video-info {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-            display: none;
-        }
-
-        .video-info h3 {
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .video-info p {
-            color: #666;
-            margin: 5px 0;
-        }
-
-        .video-thumbnail {
-            width: 100%;
-            border-radius: 10px;
-            margin-top: 10px;
-        }
-
-        .download-options {
-            display: none;
-            margin: 20px 0;
-        }
+        /* ── Download options ── */
+        .download-options { display:none; margin:20px 0; }
 
         .download-option {
             background: #f8f9fa;
@@ -305,50 +205,53 @@
             align-items: center;
         }
 
-        .download-option:hover {
-            border-color: #667eea;
-            transform: translateX(5px);
-        }
+        .download-option:hover { border-color:#667eea; transform:translateX(5px); }
 
-        .quality-info {
-            flex: 1;
-        }
-
-        .quality-label {
-            font-weight: bold;
-            color: #333;
-            font-size: 1.1em;
-        }
-
-        .quality-details {
-            font-size: 0.9em;
-            color: #666;
-            margin-top: 5px;
-        }
+        .quality-info  { flex:1; }
+        .quality-label { font-weight:bold; color:#333; font-size:1.1em; }
+        .quality-details { font-size:0.9em; color:#666; margin-top:5px; }
 
         .download-btn {
             background: #28a745;
             color: white;
             padding: 10px 20px;
             border-radius: 5px;
-            text-decoration: none;
-            transition: all 0.3s;
             border: none;
             cursor: pointer;
             font-weight: 600;
+            transition: all 0.3s;
+            flex: 0;
+            white-space: nowrap;
         }
 
-        .download-btn:hover {
-            background: #218838;
-            transform: scale(1.05);
+        .download-btn:hover  { background:#218838; transform:scale(1.05); }
+        .download-btn:disabled { background:#6c757d; cursor:not-allowed; transform:none; }
+
+        /* ── Audio progress bar ── */
+        .audio-progress-wrap {
+            display: none;
+            margin-top: 8px;
         }
 
-        .download-btn:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-            transform: none;
+        .audio-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
         }
 
+        .audio-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+
+        .audio-progress-label { font-size: 0.8em; color:#667eea; margin-top:4px; }
+
+        /* ── Info box ── */
         .info-box {
             background: #fff3cd;
             border: 1px solid #ffeaa7;
@@ -359,719 +262,604 @@
             color: #856404;
         }
 
-        /* Download notification modal */
+        /* ── Download notification ── */
         .download-notification {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            top: 50%; left: 50%;
+            transform: translate(-50%, -60%);
             background: white;
             padding: 30px;
             border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             z-index: 1000;
             display: none;
             text-align: center;
             min-width: 300px;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
         }
 
         .download-notification.show {
             display: block;
-            animation: slideIn 0.3s ease;
+            opacity: 1;
+            transform: translate(-50%, -50%);
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -60%);
-            }
-            to {
-                opacity: 1;
-                transform: translate(-50%, -50%);
-            }
-        }
+        .notification-icon  { font-size:3em; margin-bottom:15px; }
+        .notification-text  { color:#333; font-size:1.1em; font-weight:600; margin-bottom:10px; }
+        .notification-subtext { color:#666; font-size:0.9em; }
 
-        .notification-icon {
-            font-size: 3em;
-            margin-bottom: 15px;
-        }
+        .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:999; display:none; }
+        .overlay.show { display:block; }
 
-        .notification-text {
-            color: #333;
-            font-size: 1.1em;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .notification-subtext {
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            display: none;
-        }
-
-        .overlay.show {
-            display: block;
-        }
-
-        @media (max-width: 600px) {
-            .server-buttons {
-                grid-template-columns: repeat(3, 1fr);
-            }
+        @media (max-width:600px) {
+            .server-buttons { grid-template-columns:repeat(3,1fr); }
         }
     </style>
 </head>
 <body>
-    <div class="overlay" id="overlay"></div>
-    
-    <div class="download-notification" id="downloadNotification">
-        <div class="notification-icon">⬇️</div>
-        <div class="notification-text">Download Starting...</div>
-        <div class="notification-subtext">Please wait, your download will begin shortly</div>
+<div class="overlay" id="overlay"></div>
+
+<div class="download-notification" id="downloadNotification">
+    <div class="notification-icon">⬇️</div>
+    <div class="notification-text" id="notifTitle">Download Starting…</div>
+    <div class="notification-subtext" id="notifSub">Please wait, your download will begin shortly</div>
+</div>
+
+<div class="container">
+    <h1>🎬 Universal Video Downloader</h1>
+    <p class="subtitle">Download videos &amp; audio from YouTube, Instagram, TikTok &amp; Facebook</p>
+
+    <div class="supported-platforms">
+        <span class="platform-tag">YouTube</span>
+        <span class="platform-tag">Instagram</span>
+        <span class="platform-tag">TikTok</span>
+        <span class="platform-tag">Facebook</span>
     </div>
 
-    <div class="container">
-        <h1>🎬 Universal Video Downloader</h1>
-        <p class="subtitle">Download videos from YouTube, Instagram, TikTok & Facebook</p>
+    <!-- Mode toggle -->
+    <div class="mode-toggle">
+        <button class="mode-btn active" onclick="setMode('video')">📹 Video</button>
+        <button class="mode-btn"        onclick="setMode('audio')">🎵 Audio (MP3)</button>
+    </div>
 
-        <div class="supported-platforms">
-            <span class="platform-tag">YouTube</span>
-            <span class="platform-tag">Instagram</span>
-            <span class="platform-tag">TikTok</span>
-            <span class="platform-tag">Facebook</span>
-        </div>
+    <!-- Audio-only notice -->
+    <div class="audio-notice" id="audioNotice">
+        🎵 <strong>Audio mode</strong> — extracts the best-quality audio track from YouTube videos and lets you download it as <strong>MP3</strong>. Paste any YouTube URL below.
+    </div>
 
-        <!-- Video/MP3 Toggle -->
-        <div class="mode-toggle">
-            <button class="mode-btn active" onclick="setMode('video')">📹 Video</button>
-            <button class="mode-btn" onclick="setMode('mp3')">🎵 Audio</button>
-        </div>
-
-        <div class="server-section">
-            <label class="server-label">
-                Select Server
-                <span class="server-hint">If download fails, try a different server</span>
-            </label>
-            <div class="server-buttons">
-                <button class="server-btn active" onclick="selectServer(0)">Server 1</button>
-                <button class="server-btn" onclick="selectServer(1)">Server 2</button>
-                <button class="server-btn" onclick="selectServer(2)">Server 3</button>
-                <button class="server-btn" onclick="selectServer(3)">Server 4</button>
-                <button class="server-btn" onclick="selectServer(4)">Server 5</button>
-                <button class="server-btn" onclick="selectServer(5)">Server 6</button>
-                <button class="server-btn" onclick="selectServer(6)">Server 7</button>
-                <button class="server-btn" onclick="selectServer(7)">Server 8</button>
-                <button class="server-btn" onclick="selectServer(8)">Server 9</button>
-                <button class="server-btn" onclick="selectServer(9)">Server 10</button>
-            </div>
-        </div>
-
-        <div class="input-group">
-            <label for="videoUrl">Video URL</label>
-            <input 
-                type="text" 
-                id="videoUrl" 
-                placeholder="Paste video link here (e.g., https://youtube.com/watch?v=...)"
-            >
-        </div>
-
-        <div class="button-group">
-            <button class="btn-primary" onclick="fetchVideoInfo()">Get Video</button>
-            <button class="btn-secondary" onclick="clearForm()">Clear</button>
-        </div>
-
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p style="margin-top: 10px; color: #666;">Processing video...</p>
-        </div>
-
-        <div class="status-message" id="statusMessage"></div>
-
-        <div class="video-info" id="videoInfo">
-            <h3 id="videoTitle"></h3>
-            <p><strong>Author:</strong> <span id="videoAuthor"></span></p>
-            <p id="durationBlock"><strong>Duration:</strong> <span id="videoDuration"></span></p>
-            <p id="viewsBlock"><strong>Views:</strong> <span id="videoViews"></span></p>
-            <img id="videoThumbnail" class="video-thumbnail" alt="Video thumbnail">
-        </div>
-
-        <div class="download-options" id="downloadOptions">
-            <h3 style="margin-bottom: 15px; color: #333;">Download Options:</h3>
-            <div id="downloadList"></div>
-        </div>
-
-        <div class="info-box">
-            <strong>ℹ️ How to use:</strong><br>
-            1. Choose Video or Audio mode<br>
-            2. Select a server from the buttons above<br>
-            3. Copy the video URL from YouTube, Instagram, TikTok, or Facebook<br>
-            4. Paste it in the box above<br>
-            5. Click "Get Video" or "Get Audio"<br>
-            6. Choose your preferred quality and download<br><br>
-            <strong>Note:</strong> Audio mode downloads M4A format (audio only). Only public videos can be downloaded. If download doesn't start, right-click the video → "Save video as..."
+    <!-- Server selection (video mode only) -->
+    <div class="server-section" id="serverSection">
+        <label class="server-label">
+            Select Server
+            <span class="server-hint">If download fails, try a different server</span>
+        </label>
+        <div class="server-buttons">
+            <button class="server-btn active" onclick="selectServer(0)">Server 1</button>
+            <button class="server-btn" onclick="selectServer(1)">Server 2</button>
+            <button class="server-btn" onclick="selectServer(2)">Server 3</button>
+            <button class="server-btn" onclick="selectServer(3)">Server 4</button>
+            <button class="server-btn" onclick="selectServer(4)">Server 5</button>
+            <button class="server-btn" onclick="selectServer(5)">Server 6</button>
+            <button class="server-btn" onclick="selectServer(6)">Server 7</button>
+            <button class="server-btn" onclick="selectServer(7)">Server 8</button>
+            <button class="server-btn" onclick="selectServer(8)">Server 9</button>
+            <button class="server-btn" onclick="selectServer(9)">Server 10</button>
         </div>
     </div>
 
-    <script>
-        // API Configuration
-        const VIDEO_API_SERVERS = [
-            '58e4a51d7cmshf511f4ccad6260ep1713fajsn81070320eeb3',
-            'cde1a0fc21mshe791f7eb6259a41p1c4f6jsn8eae344780b5',
-            '187e4e10d9mshc10bfe9c0104b4cp1e17fajsn3d1fc9cb2645',
-            'cf16190cc1msh3a6e45972c2b670p1cfa5bjsn02333270849f',
-            '09da2cc846mshbfe34aa7b40a627p189acfjsn962374b381fe',
-            '146d902d1cmsh6d98d16d941c204p1a65cdjsn0716a67867d6',
-            'e6fcd4de5fmsh8d78827b06728ffp18e0bejsn881af26e58a9',
-            'd3f5ff39eemshb69cda63d19b2ccp13b806jsnd4fe8373cd42',
-            '98d99fb0cemshcd102195d0bead2p187198jsnbd3d1273c986',
-            '0b4d02507amsh985065fed1eb416p1d31dbjsnbec7e5464377'
-        ];
+    <div class="input-group">
+        <label for="videoUrl">Video URL</label>
+        <input type="text" id="videoUrl" placeholder="Paste video link here (e.g., https://youtube.com/watch?v=...)">
+    </div>
 
-        // MP3 API keys configured
-        const MP3_API_SERVERS = [
-            '58e4a51d7cmshf511f4ccad6260ep1713fajsn81070320eeb3',
-            '58e4a51d7cmshf511f4ccad6260ep1713fajsn81070320eeb3',
-            '58e4a51d7cmshf511f4ccad6260ep1713fajsn81070320eeb3',
-            '58e4a51d7cmshf511f4ccad6260ep1713fajsn81070320eeb3',
-            '58e4a51d7cmshf511f4ccad6260ep1713fajsn81070320eeb3',
-            '58e4a51d7cmshf511f4ccad6260ep1713fajsn81070320eeb3',
-            '58e4a51d7cmshf511f4ccad6260ep1713fajsn81070320eeb3',
-            '58e4a51d7cmshf511f4ccad6260ep1713fajsn81070320eeb3',
-            '58e4a51d7cmshf511f4ccad6260ep1713fajsn81070320eeb3',
-            '58e4a51d7cmshf511f4ccad6260ep1713fajsn81070320eeb3'
-        ];
+    <div class="button-group">
+        <button class="btn-primary" id="fetchBtn" onclick="fetchVideoInfo()">Get Video</button>
+        <button class="btn-secondary" onclick="clearForm()">Clear</button>
+    </div>
 
-        const VIDEO_API_HOST = 'social-media-video-downloader.p.rapidapi.com';
-        const MP3_API_HOST = 'coolguru1j-youtube-to-mp3-download-v1.p.rapidapi.com';
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p style="margin-top:10px;color:#666;" id="loadingText">Processing…</p>
+    </div>
 
-        let selectedServerIndex = 0;
-        let currentMode = 'video'; // 'video' or 'mp3'
-        let currentVideoData = null;
+    <div class="status-message" id="statusMessage"></div>
 
-        function setMode(mode) {
-            currentMode = mode;
-            
-            // Update button styles
-            const buttons = document.querySelectorAll('.mode-btn');
-            buttons.forEach(btn => {
-                if ((mode === 'video' && btn.textContent.includes('Video')) ||
-                    (mode === 'mp3' && btn.textContent.includes('MP3'))) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
+    <div class="video-info" id="videoInfo">
+        <h3 id="videoTitle"></h3>
+        <p><strong>Author:</strong> <span id="videoAuthor"></span></p>
+        <p id="durationBlock"><strong>Duration:</strong> <span id="videoDuration"></span></p>
+        <p id="viewsBlock"><strong>Views:</strong> <span id="videoViews"></span></p>
+        <img id="videoThumbnail" class="video-thumbnail" alt="Video thumbnail">
+    </div>
 
-            // Update "Get Video" button text based on mode
-            const getVideoBtn = document.querySelector('.btn-primary');
-            if (mode === 'mp3') {
-                getVideoBtn.textContent = 'Get Audio';
-            } else {
-                getVideoBtn.textContent = 'Get Video';
-            }
+    <div class="download-options" id="downloadOptions">
+        <h3 style="margin-bottom:15px;color:#333;" id="downloadOptionsTitle">Download Options:</h3>
+        <div id="downloadList"></div>
+    </div>
 
-            // Clear any previous results
-            clearForm();
-            
-            // Save mode preference
-            localStorage.setItem('downloadMode', mode);
+    <div class="info-box" id="infoBox">
+        <strong>ℹ️ How to use:</strong><br>
+        1. Choose <em>Video</em> or <em>Audio (MP3)</em> mode<br>
+        2. Paste the video URL<br>
+        3. Click <strong>Get Video</strong> (or <strong>Get Audio</strong>)<br>
+        4. Choose your quality and download<br><br>
+        <strong>Note:</strong> Only public videos can be downloaded. Audio mode works with YouTube only and downloads as MP3.
+    </div>
+</div>
+
+<script>
+/* ── API config ── */
+const VIDEO_API_HOST = 'social-media-video-downloader.p.rapidapi.com';
+const VIDEO_API_KEYS = [
+    '58e4a51d7cmshf511f4ccad6260ep1713fajsn81070320eeb3',
+    'cde1a0fc21mshe791f7eb6259a41p1c4f6jsn8eae344780b5',
+    '187e4e10d9mshc10bfe9c0104b4cp1e17fajsn3d1fc9cb2645',
+    'cf16190cc1msh3a6e45972c2b670p1cfa5bjsn02333270849f',
+    '09da2cc846mshbfe34aa7b40a627p189acfjsn962374b381fe',
+    '146d902d1cmsh6d98d16d941c204p1a65cdjsn0716a67867d6',
+    'e6fcd4de5fmsh8d78827b06728ffp18e0bejsn881af26e58a9',
+    'd3f5ff39eemshb69cda63d19b2ccp13b806jsnd4fe8373cd42',
+    '98d99fb0cemshcd102195d0bead2p187198jsnbd3d1273c986',
+    '0b4d02507amsh985065fed1eb416p1d31dbjsnbec7e5464377'
+];
+
+/*
+ * ── AUDIO (MP3) API ──
+ * Uses RapidAPI "YouTube MP3" or "youtube-to-mp3" style endpoint.
+ * We use: https://rapidapi.com/ytjar/api/yt-api  (free tier, reliable)
+ * Endpoint: GET /dl?id=<videoId>
+ * Host: yt-api.p.rapidapi.com
+ *
+ * ➡  Replace AUDIO_API_KEY with your own key from RapidAPI.
+ *    Sign up free at https://rapidapi.com and subscribe to "YT-API" (free plan).
+ */
+const AUDIO_API_HOST = 'yt-api.p.rapidapi.com';
+const AUDIO_API_KEY  = 'YOUR_RAPIDAPI_KEY_HERE';   // ← paste your key here
+
+let selectedServerIndex = 0;
+let currentMode = 'video';
+let currentVideoData = null;
+
+/* ───────────────── UI helpers ───────────────── */
+
+function setMode(mode) {
+    currentMode = mode;
+
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        const isVideo = btn.textContent.includes('Video');
+        const isAudio = btn.textContent.includes('Audio');
+        btn.classList.toggle('active',
+            (mode === 'video' && isVideo) || (mode === 'audio' && isAudio));
+    });
+
+    document.getElementById('fetchBtn').textContent =
+        mode === 'audio' ? 'Get Audio' : 'Get Video';
+
+    document.getElementById('audioNotice').classList.toggle('visible', mode === 'audio');
+    document.getElementById('serverSection').style.display =
+        mode === 'audio' ? 'none' : 'block';
+
+    clearForm();
+    localStorage.setItem('downloadMode', mode);
+}
+
+function selectServer(index) {
+    selectedServerIndex = index;
+    document.querySelectorAll('.server-btn').forEach((btn, i) =>
+        btn.classList.toggle('active', i === index));
+    localStorage.setItem('selectedServer', index);
+}
+
+function showNotification(title = 'Download Starting…', sub = 'Your download will begin shortly') {
+    const n = document.getElementById('downloadNotification');
+    const o = document.getElementById('overlay');
+    document.getElementById('notifTitle').textContent = title;
+    document.getElementById('notifSub').textContent   = sub;
+    n.classList.add('show');
+    o.classList.add('show');
+    setTimeout(() => { n.classList.remove('show'); o.classList.remove('show'); }, 3000);
+}
+
+function showMessage(msg, type) {
+    const el = document.getElementById('statusMessage');
+    el.textContent = msg;
+    el.className = 'status-message ' + type;
+    el.style.display = 'block';
+    if (type === 'success') setTimeout(() => el.style.display = 'none', 5000);
+}
+
+function showLoading(show, text = 'Processing…') {
+    document.getElementById('loading').style.display  = show ? 'block' : 'none';
+    document.getElementById('loadingText').textContent = text;
+}
+
+function hideElements() {
+    ['videoInfo','downloadOptions','statusMessage'].forEach(id =>
+        document.getElementById(id).style.display = 'none');
+}
+
+function clearForm() {
+    document.getElementById('videoUrl').value = '';
+    hideElements();
+    currentVideoData = null;
+}
+
+function isValidUrl(str) {
+    try { new URL(str); return true; } catch { return false; }
+}
+
+/* ───────────────── Platform detection ───────────────── */
+
+function detectPlatform(url) {
+    if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+    if (url.includes('instagram.com')) return 'instagram';
+    if (url.includes('facebook.com') || url.includes('fb.watch')) return 'facebook';
+    if (url.includes('tiktok.com')) return 'tiktok';
+    return 'unknown';
+}
+
+function extractYouTubeId(url) {
+    const pats = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/
+    ];
+    for (const p of pats) { const m = url.match(p); if (m) return m[1]; }
+    return null;
+}
+
+function extractInstagramShortcode(url) {
+    const m = url.match(/instagram\.com\/(?:p|reel)\/([a-zA-Z0-9_-]+)/);
+    return m ? m[1] : null;
+}
+
+/* ───────────────── Main dispatcher ───────────────── */
+
+async function fetchVideoInfo() {
+    const url = document.getElementById('videoUrl').value.trim();
+    if (!url)             { showMessage('Please enter a video URL', 'error'); return; }
+    if (!isValidUrl(url)) { showMessage('Please enter a valid URL', 'error'); return; }
+
+    showLoading(true, currentMode === 'audio' ? 'Fetching audio info…' : 'Processing video…');
+    hideElements();
+
+    try {
+        if (currentMode === 'audio') {
+            await fetchAudioDetails(url);
+        } else {
+            await fetchVideoDetails(url);
         }
-
-        function selectServer(index) {
-            selectedServerIndex = index;
-            
-            // Update button styles
-            const buttons = document.querySelectorAll('.server-btn');
-            buttons.forEach((btn, i) => {
-                if (i === index) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-            
-            // Save selection
-            localStorage.setItem('selectedServer', index);
+    } catch (err) {
+        console.error(err);
+        let msg = err.message || 'Something went wrong.';
+        if (msg.toLowerCase().includes('try a different server')) {
+            msg += ` Click Server ${(selectedServerIndex + 1) % 10 + 1} and try again.`;
         }
+        showMessage(msg, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
 
-        function getSelectedAPIKey() {
-            return currentMode === 'video' 
-                ? VIDEO_API_SERVERS[selectedServerIndex]
-                : MP3_API_SERVERS[selectedServerIndex];
-        }
+/* ───────────────── VIDEO mode ───────────────── */
 
-        function getSelectedServerName() {
-            return `Server ${selectedServerIndex + 1}`;
-        }
+async function fetchVideoDetails(url) {
+    const apiKey = VIDEO_API_KEYS[selectedServerIndex];
+    const server = `Server ${selectedServerIndex + 1}`;
+    const platform = detectPlatform(url);
 
-        function showDownloadNotification() {
-            const notification = document.getElementById('downloadNotification');
-            const overlay = document.getElementById('overlay');
-            
-            notification.classList.add('show');
-            overlay.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-                overlay.classList.remove('show');
-            }, 3000);
-        }
+    let endpoint;
+    if (platform === 'youtube') {
+        const vid = extractYouTubeId(url);
+        if (!vid) throw new Error('Invalid YouTube URL');
+        endpoint = `https://${VIDEO_API_HOST}/youtube/v3/video/details?videoId=${vid}`;
+    } else if (platform === 'instagram') {
+        const sc = extractInstagramShortcode(url);
+        if (!sc) throw new Error('Invalid Instagram URL');
+        endpoint = `https://${VIDEO_API_HOST}/instagram/v3/media/post/details?shortcode=${sc}`;
+    } else if (platform === 'facebook') {
+        endpoint = `https://${VIDEO_API_HOST}/facebook/v3/post/details?url=${encodeURIComponent(url)}`;
+    } else if (platform === 'tiktok') {
+        endpoint = `https://${VIDEO_API_HOST}/tiktok/v3/post/details?url=${encodeURIComponent(url)}`;
+    } else {
+        throw new Error('Platform not supported. Use YouTube, Instagram, TikTok, or Facebook.');
+    }
 
-        async function fetchVideoInfo() {
-            const urlInput = document.getElementById('videoUrl');
-            const url = urlInput.value.trim();
+    const res = await fetch(endpoint, {
+        headers: { 'X-RapidAPI-Key': apiKey, 'X-RapidAPI-Host': VIDEO_API_HOST }
+    });
 
-            if (!url) {
-                showMessage('Please enter a video URL', 'error');
-                return;
-            }
+    handleHttpError(res, server);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || 'Failed to process video');
 
-            if (!isValidUrl(url)) {
-                showMessage('Please enter a valid URL', 'error');
-                return;
-            }
+    currentVideoData = data;
+    displayVideoInfo(data, platform);
+    displayVideoDownloadOptions(data);
+    showMessage(`Video retrieved successfully using ${server}!`, 'success');
+}
 
-            // Check if MP3 API keys are configured
-            if (currentMode === 'mp3' && MP3_API_SERVERS[0] === 'YOUR_MP3_API_KEY_1') {
-                showMessage('MP3 download feature is not configured yet. Please add MP3 API keys.', 'warning');
-                return;
-            }
+/* ───────────────── AUDIO mode ───────────────── */
 
-            showLoading(true);
-            hideElements();
+async function fetchAudioDetails(url) {
+    const platform = detectPlatform(url);
+    if (platform !== 'youtube') {
+        throw new Error('Audio (MP3) download is currently only available for YouTube videos.');
+    }
 
-            try {
-                if (currentMode === 'video') {
-                    await fetchVideoDetails(url);
-                } else {
-                    await fetchMP3Details(url);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                let errorMsg = error.message;
-                
-                if (errorMsg.includes('Try a different server') || errorMsg.includes('try a different server')) {
-                    const nextServer = (selectedServerIndex + 1) % 10;
-                    errorMsg += ` Click on Server ${nextServer + 1} and try again.`;
-                }
-                
-                showMessage(errorMsg, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
+    const videoId = extractYouTubeId(url);
+    if (!videoId) throw new Error('Invalid YouTube URL — could not extract video ID.');
 
-        async function fetchVideoDetails(url) {
-            const selectedAPI = getSelectedAPIKey();
-            const serverName = getSelectedServerName();
-            
-            const platform = detectPlatform(url);
-            let endpoint = '';
+    if (AUDIO_API_KEY === 'YOUR_RAPIDAPI_KEY_HERE') {
+        /* ── Demo / fallback mode ──
+           Show a friendly message instead of crashing.
+           Replace AUDIO_API_KEY at the top of the script to enable real downloads. */
+        showMessage(
+            '⚠️ Audio API key not configured. See instructions in the info box below.',
+            'warning'
+        );
+        document.getElementById('infoBox').innerHTML = `
+            <strong>🔑 Set up your Audio API key:</strong><br>
+            1. Go to <a href="https://rapidapi.com/ytjar/api/yt-api" target="_blank">rapidapi.com → YT-API</a><br>
+            2. Subscribe to the free plan<br>
+            3. Copy your API key<br>
+            4. Open this HTML file and replace <code>YOUR_RAPIDAPI_KEY_HERE</code> with your key<br><br>
+            <strong>Why a separate key?</strong> The video servers above don't return raw audio-only files.
+            The YT-API gives a direct MP3 link that your browser can download instantly.
+        `;
+        document.getElementById('infoBox').style.background = '#fef3c7';
+        return;
+    }
 
-            if (platform === 'youtube') {
-                const videoId = extractYouTubeId(url);
-                if (!videoId) throw new Error('Invalid YouTube URL');
-                endpoint = `https://${VIDEO_API_HOST}/youtube/v3/video/details?videoId=${videoId}`;
-            } else if (platform === 'instagram') {
-                const shortcode = extractInstagramShortcode(url);
-                if (!shortcode) throw new Error('Invalid Instagram URL');
-                endpoint = `https://${VIDEO_API_HOST}/instagram/v3/media/post/details?shortcode=${shortcode}`;
-            } else if (platform === 'facebook') {
-                endpoint = `https://${VIDEO_API_HOST}/facebook/v3/post/details?url=${encodeURIComponent(url)}`;
-            } else if (platform === 'tiktok') {
-                endpoint = `https://${VIDEO_API_HOST}/tiktok/v3/post/details?url=${encodeURIComponent(url)}`;
-            } else {
-                throw new Error('Platform not supported. Please use YouTube, Instagram, TikTok, or Facebook.');
-            }
+    /* Step 1 – get video info + audio link */
+    showLoading(true, 'Fetching audio track…');
 
-            const response = await fetch(endpoint, {
-                method: 'GET',
-                headers: {
-                    'X-RapidAPI-Key': selectedAPI,
-                    'X-RapidAPI-Host': VIDEO_API_HOST
-                }
-            });
+    const res = await fetch(
+        `https://${AUDIO_API_HOST}/dl?id=${videoId}`,
+        { headers: { 'X-RapidAPI-Key': AUDIO_API_KEY, 'X-RapidAPI-Host': AUDIO_API_HOST } }
+    );
 
-            if (!response.ok) {
-                if (response.status === 403) {
-                    throw new Error(`${serverName} has an issue. Please try a different server.`);
-                } else if (response.status === 429) {
-                    throw new Error(`${serverName} is at capacity. Please try a different server.`);
-                } else if (response.status === 404) {
-                    throw new Error(`Video not found or unavailable. Make sure the video is public and the URL is correct.`);
-                } else if (response.status >= 500) {
-                    throw new Error(`${serverName} is having technical difficulties. Try a different server.`);
-                }
-                throw new Error(`${serverName} returned an error. Try a different server.`);
-            }
+    handleHttpError(res, 'Audio server');
+    const data = await res.json();
 
-            const data = await response.json();
-            currentVideoData = data;
+    if (!data || data.status === 'FAILED') {
+        throw new Error(data?.msg || 'Audio extraction failed. The video may be restricted.');
+    }
 
-            if (data.error) {
-                throw new Error(data.error.message || 'Failed to process video');
-            }
+    currentVideoData = data;
+    displayAudioInfo(data);
+    displayAudioDownloadOptions(data);
+    showMessage('Audio info fetched! Choose a quality and download below.', 'success');
+}
 
-            displayVideoInfo(data, platform);
-            displayDownloadOptions(data, platform);
-            showMessage(`Video retrieved successfully using ${serverName}!`, 'success');
-        }
+/* ───────────────── HTTP error helper ───────────────── */
 
-        async function fetchMP3Details(url) {
-            const selectedAPI = getSelectedAPIKey();
-            const serverName = getSelectedServerName();
-            
-            const platform = detectPlatform(url);
-            
-            if (platform !== 'youtube') {
-                throw new Error('Audio download is currently only available for YouTube videos.');
-            }
+function handleHttpError(res, serverLabel) {
+    if (res.ok) return;
+    const s = res.status;
+    if (s === 403) throw new Error(`${serverLabel} access denied. Try a different server.`);
+    if (s === 429) throw new Error(`${serverLabel} is at capacity. Try a different server.`);
+    if (s === 404) throw new Error('Video not found or unavailable. Make sure it is public.');
+    if (s >= 500)  throw new Error(`${serverLabel} error. Try a different server.`);
+    throw new Error(`${serverLabel} returned status ${s}. Try a different server.`);
+}
 
-            const videoId = extractYouTubeId(url);
-            if (!videoId) throw new Error('Invalid YouTube URL');
+/* ───────────────── Display helpers ───────────────── */
 
-            // Use the same video API but extract audio only
-            const endpoint = `https://${VIDEO_API_HOST}/youtube/v3/video/details?videoId=${videoId}`;
+function displayVideoInfo(data, platform) {
+    const meta = data.metadata || {};
+    document.getElementById('videoTitle').textContent   = meta.title || meta.description || 'Video';
+    document.getElementById('videoAuthor').textContent  = meta.author?.name || meta.owner?.username || 'Unknown';
+    document.getElementById('videoDuration').textContent = meta.additionalData?.duration || 'N/A';
+    document.getElementById('videoViews').textContent   = meta.additionalData?.view_count || meta.view_count || 'N/A';
+    document.getElementById('videoThumbnail').src       = meta.thumbnailUrl || meta.thumbnail_url || '';
+    document.getElementById('durationBlock').style.display = 'block';
+    document.getElementById('viewsBlock').style.display    = 'block';
+    document.getElementById('videoInfo').style.display     = 'block';
+}
 
-            const response = await fetch(endpoint, {
-                method: 'GET',
-                headers: {
-                    'X-RapidAPI-Key': selectedAPI,
-                    'X-RapidAPI-Host': VIDEO_API_HOST
-                }
-            });
+function displayAudioInfo(data) {
+    /* YT-API shape: { title, author, thumbnail, ... } */
+    document.getElementById('videoTitle').textContent  = data.title  || 'Audio';
+    document.getElementById('videoAuthor').textContent = data.author || 'Unknown';
+    document.getElementById('videoThumbnail').src      = data.thumbnail || '';
+    document.getElementById('durationBlock').style.display = 'none';
+    document.getElementById('viewsBlock').style.display    = 'none';
+    document.getElementById('videoInfo').style.display     = 'block';
+}
 
-            if (!response.ok) {
-                if (response.status === 403) {
-                    throw new Error(`${serverName} has an issue. Please try a different server.`);
-                } else if (response.status === 429) {
-                    throw new Error(`${serverName} is at capacity. Please try a different server.`);
-                } else if (response.status === 404) {
-                    throw new Error(`Video not found or unavailable. Make sure the video is public and the URL is correct.`);
-                } else if (response.status >= 500) {
-                    throw new Error(`${serverName} is having technical difficulties. Try a different server.`);
-                }
-                throw new Error(`${serverName} returned an error. Try a different server.`);
-            }
+function displayVideoDownloadOptions(data) {
+    const list = document.getElementById('downloadList');
+    list.innerHTML = '';
+    document.getElementById('downloadOptionsTitle').textContent = '📹 Video Download Options:';
 
-            const data = await response.json();
-            console.log('MP3 API Response:', data); // Debug log
-            currentVideoData = data;
+    const videos = data.contents?.[0]?.videos || [];
+    if (!videos.length) {
+        list.innerHTML = '<p style="color:#666">No download options available.</p>';
+        document.getElementById('downloadOptions').style.display = 'block';
+        return;
+    }
 
-            if (data.error) {
-                throw new Error(data.error.message || 'Failed to process video');
-            }
+    videos.forEach((v, i) => {
+        const label    = v.label || v.metadata?.quality_label || `Quality ${i+1}`;
+        const size     = v.metadata?.content_length_text || 'Unknown size';
+        const res      = v.metadata?.width && v.metadata?.height ? `${v.metadata.width}×${v.metadata.height}` : '';
+        const details  = [res, size].filter(Boolean).join(' · ');
 
-            displayMP3Info(data);
-            displayMP3DownloadOptions(data);
-            showMessage(`Audio information retrieved successfully using ${serverName}!`, 'success');
-        }
+        list.appendChild(makeDownloadRow(`📹 ${label}`, details, () => triggerDownload(v.url, `${label}.mp4`)));
+    });
 
-        function detectPlatform(url) {
-            if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
-            if (url.includes('instagram.com')) return 'instagram';
-            if (url.includes('facebook.com') || url.includes('fb.watch')) return 'facebook';
-            if (url.includes('tiktok.com')) return 'tiktok';
-            return 'unknown';
-        }
+    document.getElementById('downloadOptions').style.display = 'block';
+}
 
-        function extractYouTubeId(url) {
-            const patterns = [
-                /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
-                /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
-                /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/
-            ];
-            
-            for (const pattern of patterns) {
-                const match = url.match(pattern);
-                if (match) return match[1];
-            }
-            return null;
-        }
+function displayAudioDownloadOptions(data) {
+    const list = document.getElementById('downloadList');
+    list.innerHTML = '';
+    document.getElementById('downloadOptionsTitle').textContent = '🎵 Audio Download Options:';
 
-        function extractInstagramShortcode(url) {
-            const match = url.match(/instagram\.com\/(?:p|reel)\/([a-zA-Z0-9_-]+)/);
-            return match ? match[1] : null;
-        }
+    /*
+     * YT-API /dl response shape:
+     * { status, title, author, thumbnail,
+     *   formats: [ { itag, url, mimeType, bitrate, audioQuality, contentLength, ... } ]
+     * }
+     * We filter for audio-only formats (mimeType starts with "audio/")
+     */
+    const formats = (data.formats || []).filter(f =>
+        f.mimeType && f.mimeType.startsWith('audio/')
+    );
 
-        function displayVideoInfo(data, platform) {
-            const videoInfo = document.getElementById('videoInfo');
-            const title = document.getElementById('videoTitle');
-            const author = document.getElementById('videoAuthor');
-            const duration = document.getElementById('videoDuration');
-            const views = document.getElementById('videoViews');
-            const thumbnail = document.getElementById('videoThumbnail');
-            const durationBlock = document.getElementById('durationBlock');
-            const viewsBlock = document.getElementById('viewsBlock');
+    /* Fallback: some API variants return a single `url` at top level */
+    if (!formats.length && data.url) {
+        formats.push({ url: data.url, mimeType: 'audio/mp4', audioQuality: 'AUDIO_QUALITY_MEDIUM', bitrate: 128000 });
+    }
 
-            durationBlock.style.display = 'block';
-            viewsBlock.style.display = 'block';
+    if (!formats.length) {
+        list.innerHTML = '<p style="color:#666">No audio tracks found. Try a different video.</p>';
+        document.getElementById('downloadOptions').style.display = 'block';
+        return;
+    }
 
-            if (platform === 'youtube') {
-                title.textContent = data.metadata?.title || 'Video';
-                author.textContent = data.metadata?.author?.name || 'Unknown';
-                duration.textContent = data.metadata?.additionalData?.duration || 'N/A';
-                views.textContent = data.metadata?.additionalData?.view_count || 'N/A';
-                thumbnail.src = data.metadata?.thumbnailUrl || '';
-            } else if (platform === 'instagram' || platform === 'facebook' || platform === 'tiktok') {
-                title.textContent = data.metadata?.title || data.metadata?.description || 'Video';
-                author.textContent = data.metadata?.author?.name || data.metadata?.owner?.username || 'Unknown';
-                duration.textContent = 'N/A';
-                views.textContent = data.metadata?.view_count || 'N/A';
-                thumbnail.src = data.metadata?.thumbnailUrl || data.metadata?.thumbnail_url || '';
-            }
+    /* Sort: highest bitrate first */
+    formats.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0));
 
-            videoInfo.style.display = 'block';
-        }
+    formats.forEach((f, i) => {
+        const qualityTag = (f.audioQuality || '').replace('AUDIO_QUALITY_', '').toLowerCase();
+        const kbps       = f.bitrate ? `${Math.round(f.bitrate / 1000)} kbps` : '';
+        const sampleRate = f.audioSampleRate ? `${f.audioSampleRate} Hz` : '';
+        const sizeBytes  = f.contentLength ? formatBytes(parseInt(f.contentLength)) : '';
+        const label      = `Audio ${i+1} (${qualityTag || 'standard'})`;
+        const details    = [kbps, sampleRate, sizeBytes].filter(Boolean).join(' · ');
 
-        function displayMP3Info(data) {
-            const videoInfo = document.getElementById('videoInfo');
-            const title = document.getElementById('videoTitle');
-            const author = document.getElementById('videoAuthor');
-            const thumbnail = document.getElementById('videoThumbnail');
-            const durationBlock = document.getElementById('durationBlock');
-            const viewsBlock = document.getElementById('viewsBlock');
+        list.appendChild(makeDownloadRow(
+            `🎵 ${label}`, details,
+            () => triggerAudioDownload(f.url, `${data.title || 'audio'}_${qualityTag}.mp3`)
+        ));
+    });
 
-            // Hide duration and views for MP3
-            durationBlock.style.display = 'none';
-            viewsBlock.style.display = 'none';
+    document.getElementById('downloadOptions').style.display = 'block';
+}
 
-            // Use video API format (same as video mode)
-            title.textContent = data.metadata?.title || 'Audio';
-            author.textContent = data.metadata?.author?.name || 'Unknown';
-            thumbnail.src = data.metadata?.thumbnailUrl || '';
+function makeDownloadRow(labelText, detailsText, onDownload) {
+    const wrap = document.createElement('div');
+    wrap.className = 'download-option';
 
-            videoInfo.style.display = 'block';
-        }
+    const info = document.createElement('div');
+    info.className = 'quality-info';
+    info.innerHTML = `
+        <div class="quality-label">${labelText}</div>
+        <div class="quality-details">${detailsText}</div>
+        <div class="audio-progress-wrap" style="display:none">
+            <div class="audio-progress-bar"><div class="audio-progress-fill"></div></div>
+            <div class="audio-progress-label">Preparing download…</div>
+        </div>
+    `;
 
-        function displayDownloadOptions(data, platform) {
-            const downloadOptions = document.getElementById('downloadOptions');
-            const downloadList = document.getElementById('downloadList');
-            
-            downloadList.innerHTML = '';
+    const btn = document.createElement('button');
+    btn.className = 'download-btn';
+    btn.textContent = '⬇️ Download';
+    btn.onclick = () => { btn.disabled = true; onDownload(info, btn); };
 
-            let videos = data.contents?.[0]?.videos || [];
+    wrap.appendChild(info);
+    wrap.appendChild(btn);
+    return wrap;
+}
 
-            if (videos.length === 0) {
-                downloadList.innerHTML = '<p style="color: #666;">No download options available for this video.</p>';
-                downloadOptions.style.display = 'block';
-                return;
-            }
+/* ───────────────── Download logic ───────────────── */
 
-            videos.forEach((video, index) => {
-                const option = document.createElement('div');
-                option.className = 'download-option';
-                
-                const qualityInfo = document.createElement('div');
-                qualityInfo.className = 'quality-info';
-                
-                const label = video.label || video.metadata?.quality_label || `Quality ${index + 1}`;
-                const size = video.metadata?.content_length_text || 'Unknown size';
-                const resolution = video.metadata?.width && video.metadata?.height 
-                    ? `${video.metadata.width}x${video.metadata.height}` 
-                    : '';
-                
-                qualityInfo.innerHTML = `
-                    <div class="quality-label">${label}</div>
-                    <div class="quality-details">${resolution} - ${size}</div>
-                `;
-                
-                const downloadBtn = document.createElement('button');
-                downloadBtn.className = 'download-btn';
-                downloadBtn.textContent = '⬇️ Download';
-                downloadBtn.onclick = () => downloadVideo(video.url, label);
-                
-                option.appendChild(qualityInfo);
-                option.appendChild(downloadBtn);
-                downloadList.appendChild(option);
-            });
+function cleanFilename(raw) {
+    return (raw || 'download')
+        .replace(/[<>:"/\\|?*]/g, '')
+        .replace(/\s+/g, '_')
+        .substring(0, 100);
+}
 
-            downloadOptions.style.display = 'block';
-        }
+async function triggerDownload(url, filename) {
+    showNotification('Download Starting…', 'Check your Downloads folder shortly.');
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('fetch failed');
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = cleanFilename(filename);
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 200);
+        showMessage('Download started! Check your Downloads folder.', 'success');
+    } catch {
+        /* Fallback: open in new tab */
+        const a = Object.assign(document.createElement('a'), { href: url, download: cleanFilename(filename), target: '_blank', rel: 'noopener noreferrer' });
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        showMessage('Download opened. Right-click → "Save as…" if it opens in the browser.', 'info');
+    }
+}
 
-        function displayMP3DownloadOptions(data) {
-            const downloadOptions = document.getElementById('downloadOptions');
-            const downloadList = document.getElementById('downloadList');
-            
-            downloadList.innerHTML = '';
+async function triggerAudioDownload(url, rawFilename) {
+    const filename = cleanFilename(rawFilename).replace(/\.[^.]+$/, '') + '.mp3';
+    showNotification('Preparing MP3…', 'The file will download automatically.');
 
-            // Extract audio tracks from the video API response
-            const audios = data.contents?.[0]?.audios || [];
-            
-            if (audios.length === 0) {
-                downloadList.innerHTML = '<p style="color: #666;">No audio options available for this video.</p>';
-                downloadOptions.style.display = 'block';
-                return;
-            }
+    try {
+        /* Stream with progress */
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('fetch failed');
 
-            audios.forEach((audio, index) => {
-                const option = document.createElement('div');
-                option.className = 'download-option';
-                
-                const qualityInfo = document.createElement('div');
-                qualityInfo.className = 'quality-info';
-                
-                const label = audio.label || audio.metadata?.audio_quality || `Audio ${index + 1}`;
-                const quality = audio.metadata?.audio_quality || 'Audio';
-                const size = audio.metadata?.content_length_text || 'Unknown size';
-                const sampleRate = audio.metadata?.audio_sample_rate ? `${audio.metadata.audio_sample_rate} Hz` : '';
-                
-                qualityInfo.innerHTML = `
-                    <div class="quality-label">🎵 ${label}</div>
-                    <div class="quality-details">${quality} ${sampleRate ? '• ' + sampleRate : ''} • ${size}</div>
-                `;
-                
-                const downloadBtn = document.createElement('button');
-                downloadBtn.className = 'download-btn';
-                downloadBtn.textContent = '⬇️ Download Audio';
-                downloadBtn.onclick = () => downloadVideo(audio.url, label);
-                
-                option.appendChild(qualityInfo);
-                option.appendChild(downloadBtn);
-                downloadList.appendChild(option);
-            });
+        const total  = parseInt(res.headers.get('content-length') || '0');
+        const reader = res.body.getReader();
+        const chunks = [];
+        let received = 0;
 
-            downloadOptions.style.display = 'block';
-        }
-
-        async function downloadVideo(url, quality) {
-            try {
-                // Show download notification
-                showDownloadNotification();
-                
-                showMessage(`Preparing download for ${quality}...`, 'info');
-                
-                // Get the title from current video data
-                let filename = 'download';
-                if (currentVideoData && currentVideoData.metadata) {
-                    const title = currentVideoData.metadata.title || 
-                                 currentVideoData.metadata.description || 
-                                 'download';
-                    // Clean the title to make it a valid filename
-                    filename = title
-                        .replace(/[<>:"/\\|?*]/g, '') // Remove invalid characters
-                        .replace(/\s+/g, '_') // Replace spaces with underscores
-                        .substring(0, 100); // Limit length to 100 characters
-                }
-                
-                // Add quality and extension
-                const extension = currentMode === 'mp3' ? 'm4a' : 'mp4';
-                const finalFilename = `${filename}_${quality}.${extension}`;
-                
-                // Try direct download first
-                try {
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error('Fetch failed');
-                    
-                    const blob = await response.blob();
-                    
-                    // Create download link
-                    const downloadUrl = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = downloadUrl;
-                    a.download = finalFilename;
-                    
-                    document.body.appendChild(a);
-                    a.click();
-                    
-                    // Cleanup
-                    setTimeout(() => {
-                        window.URL.revokeObjectURL(downloadUrl);
-                        document.body.removeChild(a);
-                    }, 100);
-                    
-                    showMessage(`Download started! Check your downloads folder.`, 'success');
-                } catch (fetchError) {
-                    // Fallback: Open in new tab
-                    console.log('Direct download failed, using fallback method');
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = finalFilename;
-                    a.target = '_blank';
-                    a.rel = 'noopener noreferrer';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    
-                    showMessage(`Download opened in new tab. Right-click and select "Save as..." to download.`, 'info');
-                }
-            } catch (error) {
-                console.error('Download error:', error);
-                showMessage('Download failed. Try a different server or right-click and select "Save as..."', 'error');
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            received += value.length;
+            if (total) {
+                const pct = Math.round((received / total) * 100);
+                /* update the row's progress bar if visible */
+                document.querySelectorAll('.audio-progress-fill').forEach(el => el.style.width = pct + '%');
+                document.querySelectorAll('.audio-progress-label').forEach(el => el.textContent = `Downloading… ${pct}%`);
             }
         }
 
-        function isValidUrl(string) {
-            try {
-                new URL(string);
-                return true;
-            } catch (_) {
-                return false;
-            }
-        }
+        const blob = new Blob(chunks, { type: 'audio/mpeg' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 200);
+        showMessage(`MP3 downloaded: ${filename}`, 'success');
+    } catch {
+        /* Fallback */
+        const a = Object.assign(document.createElement('a'), { href: url, download: filename, target: '_blank', rel: 'noopener noreferrer' });
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        showMessage('Audio opened in a new tab — right-click → "Save as…" to save it.', 'info');
+    }
+}
 
-        function showMessage(message, type) {
-            const statusMessage = document.getElementById('statusMessage');
-            statusMessage.textContent = message;
-            statusMessage.className = 'status-message ' + type;
-            statusMessage.style.display = 'block';
+/* ───────────────── Utilities ───────────────── */
 
-            if (type === 'success') {
-                setTimeout(() => {
-                    statusMessage.style.display = 'none';
-                }, 5000);
-            }
-        }
+function formatBytes(bytes) {
+    if (!bytes) return '';
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
-        function showLoading(show) {
-            document.getElementById('loading').style.display = show ? 'block' : 'none';
-        }
+/* ── Keyboard shortcut ── */
+document.getElementById('videoUrl').addEventListener('keypress', e => {
+    if (e.key === 'Enter') fetchVideoInfo();
+});
 
-        function hideElements() {
-            document.getElementById('videoInfo').style.display = 'none';
-            document.getElementById('downloadOptions').style.display = 'none';
-            document.getElementById('statusMessage').style.display = 'none';
-        }
+/* ── Restore preferences ── */
+window.addEventListener('load', () => {
+    const srv = localStorage.getItem('selectedServer');
+    if (srv) selectServer(parseInt(srv));
 
-        function clearForm() {
-            document.getElementById('videoUrl').value = '';
-            hideElements();
-            currentVideoData = null;
-        }
-
-        // Allow Enter key to submit
-        document.getElementById('videoUrl').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                fetchVideoInfo();
-            }
-        });
-
-        // Load saved preferences on page load
-        window.addEventListener('load', function() {
-            const savedServer = localStorage.getItem('selectedServer');
-            if (savedServer) {
-                selectServer(parseInt(savedServer));
-            }
-
-            const savedMode = localStorage.getItem('downloadMode');
-            if (savedMode) {
-                setMode(savedMode);
-            } else {
-                // Set default button text if no saved mode
-                const getVideoBtn = document.querySelector('.btn-primary');
-                getVideoBtn.textContent = 'Get Video';
-            }
-        });
-    </script>
+    const mode = localStorage.getItem('downloadMode');
+    if (mode) setMode(mode);
+});
+</script>
 </body>
 </html>
