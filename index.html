@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Universal Video Downloader</title>
+    <!-- lamejs: pure-JS MP3 encoder (converts m4a/aac/webm audio → real .mp3) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -325,7 +327,7 @@
 
     <!-- Audio-only notice -->
     <div class="audio-notice" id="audioNotice">
-        🎵 <strong>Audio mode</strong> — extracts the best-quality audio track from YouTube videos and lets you download it as <strong>MP3</strong>. Paste any YouTube URL below.
+        🎵 <strong>Audio mode</strong> — extracts audio from YouTube videos and converts it to a real <strong>MP3</strong> file in your browser. Paste any YouTube URL below.
     </div>
 
     <!-- Server selection (video mode only) -->
@@ -384,7 +386,7 @@
         2. Paste the video URL<br>
         3. Click <strong>Get Video</strong> (or <strong>Get Audio</strong>)<br>
         4. Choose your quality and download<br><br>
-        <strong>Note:</strong> Only public videos can be downloaded. Audio mode works with YouTube only and downloads as MP3.
+        <strong>Note:</strong> Only public videos can be downloaded. Audio mode works with YouTube only and saves as a real MP3 file.
     </div>
 </div>
 
@@ -404,16 +406,6 @@ const VIDEO_API_KEYS = [
     '0b4d02507amsh985065fed1eb416p1d31dbjsnbec7e5464377'
 ];
 
-/*
- * ── AUDIO (MP3) API ──
- * Uses RapidAPI "YouTube MP3" or "youtube-to-mp3" style endpoint.
- * We use: https://rapidapi.com/ytjar/api/yt-api  (free tier, reliable)
- * Endpoint: GET /dl?id=<videoId>
- * Host: yt-api.p.rapidapi.com
- *
- * ➡  Replace AUDIO_API_KEY with your own key from RapidAPI.
- *    Sign up free at https://rapidapi.com and subscribe to "YT-API" (free plan).
- */
 const AUDIO_API_HOST = 'yt-api.p.rapidapi.com';
 const AUDIO_API_KEY  = 'a6924a3907mshab6b9e204f9fc4bp117342jsn0a340f362e6b';
 
@@ -594,12 +586,6 @@ async function fetchAudioDetails(url) {
 
     showLoading(true, 'Fetching audio track…');
 
-    /*
-     * Priority: APIs that do server-side MP3 conversion come first.
-     * 1. youtube-mp36   -> real MP3 link (best)
-     * 2. youtube-to-mp315 -> also real MP3 link
-     * 3. yt-api         -> last resort (raw webm/m4a)
-     */
     const endpoints = [
         {
             url: `https://youtube-mp36.p.rapidapi.com/dl?id=${videoId}`,
@@ -640,7 +626,7 @@ async function fetchAudioDetails(url) {
             displayAudioInfo(result);
             displayAudioDownloadOptions(result);
             showMessage('Audio ready! Choose a quality and download.', 'success');
-            return; // ✅ success
+            return;
         } catch (err) {
             console.warn(`[Audio] ${ep.host} failed:`, err);
             lastError = err.message;
@@ -653,12 +639,10 @@ async function fetchAudioDetails(url) {
 /* ── Parsers for each API shape ── */
 
 function extractFormatsFromYtApi(data) {
-    // Shape: { status, title, thumbnail, author, adaptiveFormats: [...], formats: [...] }
     const title     = data.title || data.videoDetails?.title || 'Audio';
     const author    = data.author || data.videoDetails?.author || '';
     const thumbnail = data.thumbnail?.[0]?.url || data.thumbnail || '';
 
-    // Try adaptiveFormats first (has audio-only), then formats
     const all = [...(data.adaptiveFormats || []), ...(data.formats || [])];
     const audioFormats = all.filter(f =>
         f.mimeType && f.mimeType.startsWith('audio/')
@@ -668,7 +652,8 @@ function extractFormatsFromYtApi(data) {
         bitrate:     f.bitrate || f.averageBitrate || 0,
         audioQuality: f.audioQuality || '',
         sampleRate:  f.audioSampleRate || '',
-        size:        f.contentLength ? formatBytes(parseInt(f.contentLength)) : ''
+        size:        f.contentLength ? formatBytes(parseInt(f.contentLength)) : '',
+        needsConversion: true   // ← m4a/webm from yt-api always needs conversion
     }));
 
     if (!audioFormats.length) return null;
@@ -676,7 +661,6 @@ function extractFormatsFromYtApi(data) {
 }
 
 function extractFormatsFromMp36(data) {
-    // Shape: { status: "ok", link: "https://...", title, duration }
     if (data.status !== 'ok' || !data.link) return null;
     return {
         title:     data.title || 'Audio',
@@ -688,13 +672,13 @@ function extractFormatsFromMp36(data) {
             bitrate:     128000,
             audioQuality: 'STANDARD',
             sampleRate:  '',
-            size:        ''
+            size:        '',
+            needsConversion: false  // ← already a real MP3 link
         }]
     };
 }
 
 function extractFormatsFromMp315(data) {
-    // Shape: { url, title } or { download_url, title }
     const link = data.url || data.download_url || data.mp3 || data.link;
     if (!link) return null;
     return {
@@ -707,7 +691,8 @@ function extractFormatsFromMp315(data) {
             bitrate:     128000,
             audioQuality: 'STANDARD',
             sampleRate:  '',
-            size:        ''
+            size:        '',
+            needsConversion: false  // ← already a real MP3 link
         }]
     };
 }
@@ -784,22 +769,19 @@ function displayAudioDownloadOptions(result) {
         return;
     }
 
-    /* Sort: highest bitrate first */
     formats.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0));
 
     formats.forEach((f, i) => {
         const qualityTag = (f.audioQuality || 'standard').replace('AUDIO_QUALITY_', '').toLowerCase();
         const kbps       = f.bitrate ? `${Math.round(f.bitrate / 1000)} kbps` : '128 kbps';
         const sampleRate = f.sampleRate ? `${f.sampleRate} Hz` : '';
-        const isTrueMP3  = f.mimeType === 'audio/mpeg';
-        const formatTag  = isTrueMP3 ? 'MP3' : 'Audio → MP3';
-        const label      = `${formatTag} — ${qualityTag}`;
+        const label      = `MP3 — ${qualityTag}`;
         const details    = [kbps, sampleRate, f.size].filter(Boolean).join(' · ') || 'MP3 Audio';
         const safeTitle  = (result.title || 'audio').replace(/[<>:"/\\|?*]/g, '').trim() || 'audio';
 
         list.appendChild(makeDownloadRow(
             `🎵 ${label}`, details,
-            () => triggerAudioDownload(f.url, `${safeTitle}.mp3`)
+            (infoEl, btn) => triggerAudioDownload(f, safeTitle, infoEl, btn)
         ));
     });
 
@@ -815,9 +797,9 @@ function makeDownloadRow(labelText, detailsText, onDownload) {
     info.innerHTML = `
         <div class="quality-label">${labelText}</div>
         <div class="quality-details">${detailsText}</div>
-        <div class="audio-progress-wrap" style="display:none">
+        <div class="audio-progress-wrap">
             <div class="audio-progress-bar"><div class="audio-progress-fill"></div></div>
-            <div class="audio-progress-label">Preparing download…</div>
+            <div class="audio-progress-label">Preparing…</div>
         </div>
     `;
 
@@ -854,23 +836,40 @@ async function triggerDownload(url, filename) {
         setTimeout(() => { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 200);
         showMessage('Download started! Check your Downloads folder.', 'success');
     } catch {
-        /* Fallback: open in new tab */
         const a = Object.assign(document.createElement('a'), { href: url, download: cleanFilename(filename), target: '_blank', rel: 'noopener noreferrer' });
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         showMessage('Download opened. Right-click → "Save as…" if it opens in the browser.', 'info');
     }
 }
 
-async function triggerAudioDownload(url, rawFilename) {
-    const filename = cleanFilename(rawFilename).replace(/\.[^.]+$/, '') + '.mp3';
-    showNotification('Preparing MP3…', 'The file will download automatically.');
+/* ─────────────────────────────────────────────────────────────────
+   triggerAudioDownload
+   ─────────────────────────────────────────────────────────────────
+   Strategy:
+   1. If the API already returned a real MP3 URL (needsConversion = false)
+      → download it directly (no conversion needed).
+   2. If it returned m4a/webm (needsConversion = true)
+      → fetch the raw audio, decode with Web Audio API, then encode
+        PCM → MP3 using lamejs, and save the result as .mp3.
+   This guarantees the saved file is always a real MP3.
+   ───────────────────────────────────────────────────────────────── */
+
+async function triggerAudioDownload(format, safeTitle, infoEl, btn) {
+    const filename = cleanFilename(safeTitle) + '.mp3';
+    const progressWrap = infoEl.querySelector('.audio-progress-wrap');
+    const progressFill = infoEl.querySelector('.audio-progress-fill');
+    const progressLabel = infoEl.querySelector('.audio-progress-label');
+
+    progressWrap.style.display = 'block';
+    setProgress(progressFill, progressLabel, 0, 'Fetching audio…');
+    showNotification('Preparing MP3…', 'Converting audio — please wait.');
 
     try {
-        /* Stream with progress */
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('fetch failed');
+        /* ── Step 1: Fetch raw audio bytes ── */
+        const res = await fetch(format.url);
+        if (!res.ok) throw new Error(`HTTP ${res.status} fetching audio`);
 
-        const total  = parseInt(res.headers.get('content-length') || '0');
+        const total = parseInt(res.headers.get('content-length') || '0');
         const reader = res.body.getReader();
         const chunks = [];
         let received = 0;
@@ -880,28 +879,136 @@ async function triggerAudioDownload(url, rawFilename) {
             if (done) break;
             chunks.push(value);
             received += value.length;
-            if (total) {
-                const pct = Math.round((received / total) * 100);
-                /* update the row's progress bar if visible */
-                document.querySelectorAll('.audio-progress-fill').forEach(el => el.style.width = pct + '%');
-                document.querySelectorAll('.audio-progress-label').forEach(el => el.textContent = `Downloading… ${pct}%`);
-            }
+            if (total) setProgress(progressFill, progressLabel,
+                Math.round((received / total) * 40),   // 0-40% = download
+                `Downloading… ${Math.round((received/total)*100)}%`);
         }
 
-        const blob = new Blob(chunks, { type: 'audio/mpeg' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 200);
-        showMessage(`MP3 downloaded: ${filename}`, 'success');
-    } catch {
-        /* Fallback */
-        const a = Object.assign(document.createElement('a'), { href: url, download: filename, target: '_blank', rel: 'noopener noreferrer' });
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        showMessage('Audio opened in a new tab — right-click → "Save as…" to save it.', 'info');
+        setProgress(progressFill, progressLabel, 40, 'Download complete. Decoding…');
+        const rawBuffer = mergeChunks(chunks, received);
+
+        /* ── Step 2: Decide whether conversion is needed ── */
+        if (!format.needsConversion) {
+            /* Already a real MP3 — just save it */
+            setProgress(progressFill, progressLabel, 100, 'Saving MP3…');
+            const blob = new Blob([rawBuffer], { type: 'audio/mpeg' });
+            saveBlobAs(blob, filename);
+            showMessage(`MP3 downloaded: ${filename}`, 'success');
+            return;
+        }
+
+        /* ── Step 3: Decode audio via Web Audio API ── */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let audioBuffer;
+        try {
+            audioBuffer = await audioCtx.decodeAudioData(rawBuffer.buffer);
+        } catch (decodeErr) {
+            console.warn('Web Audio decode failed, falling back to direct save:', decodeErr);
+            /* Fallback: save whatever we got — better than nothing */
+            const blob = new Blob([rawBuffer], { type: 'audio/mp4' });
+            saveBlobAs(blob, safeTitle + '.m4a');
+            showMessage('Saved as .m4a (conversion not supported in this browser). Try playing it with VLC.', 'warning');
+            return;
+        }
+
+        setProgress(progressFill, progressLabel, 60, 'Decoding complete. Encoding MP3…');
+
+        /* ── Step 4: Encode PCM → MP3 with lamejs ── */
+        const mp3Blob = await encodePcmToMp3(audioBuffer, (pct) => {
+            setProgress(progressFill, progressLabel,
+                60 + Math.round(pct * 0.38),   // 60-98% = encoding
+                `Encoding MP3… ${Math.round(pct)}%`);
+        });
+
+        setProgress(progressFill, progressLabel, 100, 'Done!');
+        saveBlobAs(mp3Blob, filename);
+        showMessage(`MP3 saved: ${filename}`, 'success');
+
+    } catch (err) {
+        console.error('[Audio download]', err);
+        progressWrap.style.display = 'none';
+        btn.disabled = false;
+        showMessage('Download failed: ' + err.message, 'error');
     }
+}
+
+/* ── Encode a decoded AudioBuffer to MP3 using lamejs ── */
+async function encodePcmToMp3(audioBuffer, onProgress) {
+    const numChannels = Math.min(audioBuffer.numberOfChannels, 2);
+    const sampleRate  = audioBuffer.sampleRate;
+    const bitRate     = 128; // kbps
+
+    const mp3enc = new lamejs.Mp3Encoder(numChannels, sampleRate, bitRate);
+    const mp3Data = [];
+
+    /* Get PCM samples (Float32 -1..1 → Int16 -32768..32767) */
+    const left  = float32ToInt16(audioBuffer.getChannelData(0));
+    const right = numChannels === 2
+        ? float32ToInt16(audioBuffer.getChannelData(1))
+        : left;
+
+    const CHUNK = 1152; // lamejs requires multiples of 576; 1152 is standard frame size
+    const total = left.length;
+
+    for (let i = 0; i < total; i += CHUNK) {
+        const l = left.subarray(i, i + CHUNK);
+        const r = right.subarray(i, i + CHUNK);
+        const encoded = numChannels === 2
+            ? mp3enc.encodeBuffer(l, r)
+            : mp3enc.encodeBuffer(l);
+        if (encoded.length > 0) mp3Data.push(new Uint8Array(encoded));
+
+        /* Yield to UI every ~100 chunks so the progress bar updates */
+        if (i % (CHUNK * 100) === 0) {
+            onProgress(Math.round((i / total) * 100));
+            await yieldToUI();
+        }
+    }
+
+    const flushed = mp3enc.flush();
+    if (flushed.length > 0) mp3Data.push(new Uint8Array(flushed));
+
+    onProgress(100);
+    return new Blob(mp3Data, { type: 'audio/mpeg' });
+}
+
+/* ── Float32 → Int16 PCM ── */
+function float32ToInt16(f32) {
+    const i16 = new Int16Array(f32.length);
+    for (let i = 0; i < f32.length; i++) {
+        const s = Math.max(-1, Math.min(1, f32[i]));
+        i16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+    }
+    return i16;
+}
+
+/* ── Merge Uint8Array chunks into a single ArrayBuffer ── */
+function mergeChunks(chunks, totalBytes) {
+    const merged = new Uint8Array(totalBytes);
+    let offset = 0;
+    for (const chunk of chunks) { merged.set(chunk, offset); offset += chunk.length; }
+    return merged;
+}
+
+/* ── Save a Blob as a file ── */
+function saveBlobAs(blob, filename) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 200);
+}
+
+/* ── Update progress bar + label ── */
+function setProgress(fill, label, pct, text) {
+    fill.style.width  = pct + '%';
+    label.textContent = text;
+}
+
+/* ── Give the browser a chance to repaint ── */
+function yieldToUI() {
+    return new Promise(resolve => setTimeout(resolve, 0));
 }
 
 /* ───────────────── Utilities ───────────────── */
